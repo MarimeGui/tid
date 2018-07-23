@@ -23,7 +23,8 @@ pub struct TID {
 pub enum DataType {
     RGBA = 0x90,
     ARGB = 0x92,
-    BC1 = 0x94,
+    BC1_94 = 0x94,
+    BC1_9C = 0x9C,
 }
 
 #[derive(Clone, Copy)]
@@ -64,7 +65,7 @@ impl TID {
                 }
                 image_out
             }
-            DataType::BC1 => {
+            DataType::BC1_94 | DataType::BC1_9C => {
                 let mut image_out =
                     Vec::with_capacity((self.dimensions.width * self.dimensions.height) as usize);
                 let reader = &mut Cursor::new(self.image_buffer.clone());
@@ -96,8 +97,8 @@ impl DataType {
         Ok(match reader.read_to_u8()? {
             0x90 => DataType::RGBA,
             0x92 => DataType::ARGB,
-            0x94 => DataType::BC1,
-            0x9C => DataType::BC1,
+            0x94 => DataType::BC1_94,
+            0x9C => DataType::BC1_9C,
             x => return Err(TIDImportError::UnknownDataType(x)),
         })
     }
