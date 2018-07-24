@@ -16,6 +16,7 @@ use texture_decode::{decode_bc1_block, morton_order};
 #[derive(Clone)]
 pub struct TID {
     pub data_type: DataType,
+    pub name: String,
     pub dimensions: ImageSize,
     pub image_buffer: Vec<u8>,
 }
@@ -39,13 +40,24 @@ impl TID {
         check_magic_number(reader, vec![b'T', b'I', b'D'])?;
         let data_type = DataType::import(reader)?;
         let file_size = reader.read_le_to_u32()?;
-        reader.seek(SeekFrom::Current(0x3C))?;
+        reader.seek(SeekFrom::Start(0x20)).unwrap();
+        let mut name = String::new();
+        loop {
+            match reader.read_to_u8().unwrap() {
+                0x00 => {
+                    break;
+                }
+                x => name.push(char::from(x)),
+            }
+        }
+        reader.seek(SeekFrom::Start(0x44))?;
         let dimensions = ImageSize::import(reader)?;
-        reader.seek(SeekFrom::Current(0x34))?;
+        reader.seek(SeekFrom::Start(0x80))?;
         let mut image_buffer = vec![0u8; (file_size - 0x80) as usize];
         reader.read_exact(&mut image_buffer)?;
         Ok(TID {
             data_type,
+            name,
             dimensions,
             image_buffer,
         })
