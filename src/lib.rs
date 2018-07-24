@@ -71,12 +71,7 @@ impl TID {
                 let reader = &mut Cursor::new(self.image_buffer.clone());
                 for i in 0..((self.dimensions.width / 4) * self.dimensions.height / 4) {
                     let tile = decode_bc1_block(reader);
-                    let tile_write_position = {
-                        let mut temp = morton_order(i, self.dimensions);
-                        temp.x *= 4;
-                        temp.y *= 4;
-                        temp
-                    };
+                    let tile_write_position = morton_order(i, self.dimensions);
                     for tile_y in 0..4 {
                         for tile_x in 0..4 {
                             let actual_pos_x = (tile_write_position.x * 4) + tile_x;
