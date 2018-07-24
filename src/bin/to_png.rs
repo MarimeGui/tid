@@ -1,14 +1,14 @@
 extern crate clap;
 extern crate png;
-extern crate tid;
 extern crate rgb;
+extern crate tid;
 
 use clap::{App, Arg};
-use std::io::{BufReader, BufWriter};
-use std::fs::File;
-use tid::TID;
-use png::{HasParameters, Encoder};
+use png::{Encoder, HasParameters};
 use rgb::ComponentBytes;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
+use tid::TID;
 
 fn main() {
     let matches = App::new("Test TID Export")
@@ -21,9 +21,8 @@ fn main() {
     let input = matches.value_of("INPUT").expect("No INPUT");
     let reader = &mut BufReader::new(File::open(input).expect("No such Input file"));
     let tid = TID::import(reader).expect("Error while importing TID");
-    println!("Imported Image");
+    println!("Image type {}", tid.data_type);
     let image = tid.convert();
-    println!("Converted image");
     let w = &mut BufWriter::new(
         File::create(
             matches
@@ -35,5 +34,5 @@ fn main() {
     encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
     writer.write_image_data(image.as_bytes()).unwrap();
-    println!("Wrote image successfully");
+    println!("Converted image successfully");
 }

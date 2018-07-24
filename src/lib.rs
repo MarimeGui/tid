@@ -9,6 +9,7 @@ use error::TIDImportError;
 use ez_io::ReadE;
 use magic_number::check_magic_number;
 use rgb::{FromSlice, RGBA8};
+use std::fmt::{Display, Formatter, Result as FMTResult};
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use texture_decode::{decode_bc1_block, morton_order};
 
@@ -66,11 +67,19 @@ impl TID {
                 image_out
             }
             DataType::BC1_94 | DataType::BC1_9C => {
-                let mut image_out = vec![RGBA8 {r: 0, g: 0, b: 0, a: 0}; (self.dimensions.width * self.dimensions.height) as usize];
+                let mut image_out = vec![
+                    RGBA8 {
+                        r: 0,
+                        g: 0,
+                        b: 0,
+                        a: 0
+                    };
+                    (self.dimensions.width * self.dimensions.height) as usize
+                ];
                 let reader = &mut Cursor::new(self.image_buffer.clone());
                 let order_dimensions = ImageSize {
                     width: self.dimensions.width / 4,
-                    height: self.dimensions.height / 4
+                    height: self.dimensions.height / 4,
                 };
                 for i in 0..(order_dimensions.width * order_dimensions.height) {
                     let tile = decode_bc1_block(reader);
@@ -99,6 +108,17 @@ impl DataType {
             0x9C => DataType::BC1_9C,
             x => return Err(TIDImportError::UnknownDataType(x)),
         })
+    }
+}
+
+impl Display for DataType {
+    fn fmt(&self, f: &mut Formatter) -> FMTResult {
+        match *self {
+            DataType::RGBA => write!(f, "RGBA"),
+            DataType::ARGB => write!(f, "ARGB"),
+            DataType::BC1_94 => write!(f, "BC1 (0x94)"),
+            DataType::BC1_9C => write!(f, "BC1 (0x9C)"),
+        }
     }
 }
 
