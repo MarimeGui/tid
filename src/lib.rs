@@ -66,12 +66,15 @@ impl TID {
                 image_out
             }
             DataType::BC1_94 | DataType::BC1_9C => {
-                let mut image_out =
-                    Vec::with_capacity((self.dimensions.width * self.dimensions.height) as usize);
+                let mut image_out = vec![RGBA8 {r: 0, g: 0, b: 0, a: 0}; (self.dimensions.width * self.dimensions.height) as usize];
                 let reader = &mut Cursor::new(self.image_buffer.clone());
-                for i in 0..((self.dimensions.width / 4) * self.dimensions.height / 4) {
+                let order_dimensions = ImageSize {
+                    width: self.dimensions.width / 4,
+                    height: self.dimensions.height / 4
+                };
+                for i in 0..(order_dimensions.width * order_dimensions.height) {
                     let tile = decode_bc1_block(reader);
-                    let tile_write_position = morton_order(i, self.dimensions);
+                    let tile_write_position = morton_order(i, order_dimensions);
                     for tile_y in 0..4 {
                         for tile_x in 0..4 {
                             let actual_pos_x = (tile_write_position.x * 4) + tile_x;
