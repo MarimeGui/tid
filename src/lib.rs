@@ -41,7 +41,7 @@ impl TID {
         reader.seek(SeekFrom::Current(0x3C))?;
         let dimensions = ImageSize::import(reader)?;
         reader.seek(SeekFrom::Current(0x34))?;
-        let mut image_buffer = vec![0u8; (file_size - 80) as usize];
+        let mut image_buffer = vec![0u8; (file_size - 0x80) as usize];
         reader.read_exact(&mut image_buffer)?;
         Ok(TID {
             data_type,
@@ -55,7 +55,7 @@ impl TID {
             DataType::ARGB => {
                 let mut image_out =
                     Vec::with_capacity((self.dimensions.width * self.dimensions.height) as usize);
-                for i in 0..(self.image_buffer.len() / 4) {
+                for i in (0..(self.image_buffer.len())).step_by(4) {
                     image_out.push(RGBA8 {
                         a: self.image_buffer[i],
                         r: self.image_buffer[i + 1],
