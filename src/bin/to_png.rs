@@ -21,7 +21,7 @@ fn main() {
     let input = matches.value_of("INPUT").expect("No INPUT");
     let reader = &mut BufReader::new(File::open(input).expect("No such Input file"));
     let tid = TID::import(reader).expect("Error while importing TID");
-    println!("Image type {}", tid.data_type);
+    println!("{}, {}", tid.data_type, tid.dimensions);
     let image = tid.convert();
     let w = &mut BufWriter::new(
         File::create(

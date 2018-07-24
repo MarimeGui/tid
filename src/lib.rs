@@ -130,3 +130,9 @@ impl ImageSize {
         })
     }
 }
+
+impl Display for ImageSize {
+    fn fmt(&self, f: &mut Formatter) -> FMTResult {
+        write!(f, "{}x{}", self.width, self.height)
+    }
+}
