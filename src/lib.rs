@@ -23,6 +23,7 @@ pub struct TID {
 
 #[derive(Clone, Copy)]
 pub enum DataType {
+    BC1_84 = 0x84,
     RGBA = 0x90,
     ARGB = 0x92,
     BC1_94 = 0x94,
@@ -78,7 +79,7 @@ impl TID {
                 }
                 image_out
             }
-            DataType::BC1_94 | DataType::BC1_9C => {
+            DataType::BC1_84 | DataType::BC1_94 | DataType::BC1_9C => {
                 let mut image_out = vec![
                     RGBA8 {
                         r: 0,
@@ -114,6 +115,7 @@ impl TID {
 impl DataType {
     fn import<R: Read>(reader: &mut R) -> Result<DataType, TIDImportError> {
         Ok(match reader.read_to_u8()? {
+            0x84 => DataType::BC1_84,
             0x90 => DataType::RGBA,
             0x92 => DataType::ARGB,
             0x94 => DataType::BC1_94,
@@ -126,6 +128,7 @@ impl DataType {
 impl Display for DataType {
     fn fmt(&self, f: &mut Formatter) -> FMTResult {
         match *self {
+            DataType::BC1_84 => write!(f, "BC1 (0x84)"),
             DataType::RGBA => write!(f, "RGBA"),
             DataType::ARGB => write!(f, "ARGB"),
             DataType::BC1_94 => write!(f, "BC1 (0x94)"),
