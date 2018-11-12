@@ -2,6 +2,7 @@
 name = "tid"
 version = "0.1.0"
 authors = ["MarimeGui <lepro.guillaume@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 magic_number = { git = "https://github.com/MarimeGui/magic_number_rust.git" }

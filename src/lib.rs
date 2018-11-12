@@ -5,13 +5,13 @@ extern crate rgb;
 pub mod error;
 pub mod texture_decode;
 
-use error::TIDError;
+use crate::error::TIDError;
 use ez_io::ReadE;
 use magic_number::check_magic_number;
 use rgb::{FromSlice, RGBA8};
 use std::fmt::{Display, Formatter, Result as FMTResult};
 use std::io::{Read, Seek, SeekFrom};
-use texture_decode::{decode_bc1_block, morton_order};
+use crate::texture_decode::{decode_bc1_block, morton_order};
 
 pub type Result<T> = ::std::result::Result<T, TIDError>;
 
