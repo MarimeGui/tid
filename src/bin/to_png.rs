@@ -22,7 +22,7 @@ fn main() {
     let reader = &mut BufReader::new(File::open(input).expect("No such Input file"));
     let tid = TID::import(reader).expect("Error while importing TID");
     println!("'{}', {}, {}", tid.name, tid.data_type, tid.dimensions);
-    let image = tid.convert();
+    let image = tid.convert().unwrap();
     let w = &mut BufWriter::new(
         File::create(
             matches
