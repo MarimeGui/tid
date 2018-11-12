@@ -10,18 +10,18 @@ use ez_io::ReadE;
 use magic_number::check_magic_number;
 use rgb::{FromSlice, RGBA8};
 use std::fmt::{Display, Formatter, Result as FMTResult};
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use texture_decode::{decode_bc1_block, morton_order};
 
 pub type Result<T> = ::std::result::Result<T, TIDError>;
 
 #[derive(Clone)]
 pub struct TID {
+    pub file_size: u32,
     pub data_type: DataType,
     pub name: String,
     pub dimensions: ImageSize,
     pub bc_type: BlockCompressionType,
-    pub image_buffer: Vec<u8>,
 }
 
 #[derive(Clone, Copy)]
@@ -64,28 +64,34 @@ impl TID {
         reader.seek(SeekFrom::Start(0x64))?;
         let bc_type = BlockCompressionType::import(reader)?;
         reader.seek(SeekFrom::Start(0x80))?;
-        let mut image_buffer = vec![0u8; (file_size - 0x80) as usize];
-        reader.read_exact(&mut image_buffer)?;
         Ok(TID {
+            file_size,
             data_type,
             name,
             dimensions,
             bc_type,
-            image_buffer,
         })
     }
-    pub fn convert(&self) -> Result<Vec<RGBA8>> {
+    pub fn convert<R: Read>(&self, reader: &mut R) -> Result<Vec<RGBA8>> {
         match self.data_type {
-            DataType::RGBA => Ok(self.image_buffer.as_rgba().to_vec()),
+            DataType::RGBA => {
+                let buffer_size = self.dimensions.width * self.dimensions.height * 4;
+                let mut image_buffer = vec![0u8; buffer_size as usize];
+                reader.read_exact(&mut image_buffer)?;
+                Ok(image_buffer.as_rgba().to_vec())
+            }
             DataType::ARGB => {
+                let buffer_size = (self.dimensions.width * self.dimensions.height * 4) as usize;
                 let mut image_out =
                     Vec::with_capacity((self.dimensions.width * self.dimensions.height) as usize);
-                for i in (0..(self.image_buffer.len())).step_by(4) {
+                for i in (0..buffer_size).step_by(4) {
+                    let mut raw_pixel = vec![0u8; 4];
+                    reader.read_exact(&mut raw_pixel)?;
                     image_out.push(RGBA8 {
-                        a: self.image_buffer[i],
-                        r: self.image_buffer[i + 1],
-                        g: self.image_buffer[i + 2],
-                        b: self.image_buffer[i + 3],
+                        a: raw_pixel[i],
+                        r: raw_pixel[i + 1],
+                        g: raw_pixel[i + 2],
+                        b: raw_pixel[i + 3],
                     });
                 }
                 Ok(image_out)
@@ -102,7 +108,6 @@ impl TID {
                         (self.dimensions.width * self.dimensions.height)
                             as usize
                     ];
-                    let reader = &mut Cursor::new(self.image_buffer.clone());
                     let order_dimensions = ImageSize {
                         width: self.dimensions.width / 4,
                         height: self.dimensions.height / 4,
@@ -115,7 +120,7 @@ impl TID {
                                 let actual_pos_x = (tile_write_position.x * 4) + tile_x;
                                 let actual_pos_y = (tile_write_position.y * 4) + tile_y;
                                 image_out[((actual_pos_y * self.dimensions.width) + actual_pos_x)
-                                              as usize] = tile[((tile_y * 4) + tile_x) as usize];
+                                    as usize] = tile[((tile_y * 4) + tile_x) as usize];
                             }
                         }
                     }
@@ -124,9 +129,7 @@ impl TID {
                 BlockCompressionType::DXT5 => {
                     unimplemented!("DXT5 is not implemented yet");
                 }
-                BlockCompressionType::None => {
-                    Err(TIDError::NoFourCC)
-                }
+                BlockCompressionType::None => Err(TIDError::NoFourCC),
             },
         }
     }

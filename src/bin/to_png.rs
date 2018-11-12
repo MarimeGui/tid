@@ -22,13 +22,14 @@ fn main() {
     let reader = &mut BufReader::new(File::open(input).expect("No such Input file"));
     let tid = TID::import(reader).expect("Error while importing TID");
     println!("'{}', {}, {}", tid.name, tid.data_type, tid.dimensions);
-    let image = tid.convert().unwrap();
+    let image = tid.convert(reader).unwrap();
     let w = &mut BufWriter::new(
         File::create(
             matches
                 .value_of("OUTPUT")
                 .expect("Cannot create output file"),
-        ).unwrap(),
+        )
+        .unwrap(),
     );
     let mut encoder = Encoder::new(w, tid.dimensions.width, tid.dimensions.height);
     encoder.set(png::ColorType::RGBA).set(png::BitDepth::Eight);

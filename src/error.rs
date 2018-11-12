@@ -29,11 +29,12 @@ impl fmt::Display for TIDError {
         match self {
             TIDError::IO(ref e) => e.fmt(f),
             TIDError::MagicNumber(ref e) => e.fmt(f),
-            TIDError::UnknownDataType(ref dt) => {
-                write!(f, "{} is unknown as a Data Type", dt)
-            }
+            TIDError::UnknownDataType(ref dt) => write!(f, "{} is unknown as a Data Type", dt),
             TIDError::UnknownFourCC(ref fcc) => write!(f, "{:?} is unknown", fcc),
-            TIDError::NoFourCC => write!(f, "No FourCC was defined, cannot infer what type of Block Compression to decode"),
+            TIDError::NoFourCC => write!(
+                f,
+                "No FourCC was defined, cannot infer what type of Block Compression to decode"
+            ),
         }
     }
 }
