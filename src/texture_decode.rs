@@ -1,4 +1,5 @@
 use super::ImageSize;
+use crate::Result;
 use ez_io::ReadE;
 use rgb::RGBA8;
 use std::cmp::min;
@@ -55,7 +56,7 @@ fn compact_1_by_1(input: u32) -> u32 {
 // ---------------- BC1 Stuff ----------------
 // Almost copy pasted from https://github.com/ifeherva/bcndecode/blob/master/src/decode.rs
 
-pub fn decode_bc1_block<R: Read>(reader: &mut R) -> [RGBA8; 16] {
+pub fn decode_bc1_block<R: Read>(reader: &mut R) -> Result<[RGBA8; 16]> {
     let mut out = [RGBA8 {
         r: 0,
         b: 0,
@@ -68,9 +69,9 @@ pub fn decode_bc1_block<R: Read>(reader: &mut R) -> [RGBA8; 16] {
         g: 0,
         a: 0,
     }; 4];
-    let c0 = reader.read_le_to_u16().unwrap();
-    let c1 = reader.read_le_to_u16().unwrap();
-    let lut = reader.read_le_to_u32().unwrap();
+    let c0 = reader.read_le_to_u16()?;
+    let c1 = reader.read_le_to_u16()?;
+    let lut = reader.read_le_to_u32()?;
     palette[0] = decode_565(c0);
     let r0 = u16::from(palette[0].r);
     let g0 = u16::from(palette[0].g);
@@ -102,7 +103,7 @@ pub fn decode_bc1_block<R: Read>(reader: &mut R) -> [RGBA8; 16] {
         let cw = (3 & (lut >> (2 * n))) as usize;
         out[n] = palette[cw];
     }
-    out
+    Ok(out)
 }
 
 fn decode_565(color: u16) -> RGBA8 {

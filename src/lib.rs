@@ -1,17 +1,15 @@
 extern crate ez_io;
-extern crate magic_number;
 extern crate rgb;
 
 pub mod error;
 pub mod texture_decode;
 
 use crate::error::TIDError;
-use ez_io::ReadE;
-use magic_number::check_magic_number;
+use crate::texture_decode::{decode_bc1_block, morton_order};
+use ez_io::{MagicNumberCheck, ReadE};
 use rgb::{FromSlice, RGBA8};
 use std::fmt::{Display, Formatter, Result as FMTResult};
 use std::io::{Read, Seek, SeekFrom};
-use crate::texture_decode::{decode_bc1_block, morton_order};
 
 pub type Result<T> = ::std::result::Result<T, TIDError>;
 
@@ -46,19 +44,21 @@ pub struct ImageSize {
 
 impl TID {
     pub fn import<R: Read + Seek>(reader: &mut R) -> Result<TID> {
-        check_magic_number(reader, vec![b'T', b'I', b'D'])?;
+        reader.check_magic_number(&[b'T', b'I', b'D'])?;
         let data_type = DataType::import(reader)?;
         let file_size = reader.read_le_to_u32()?;
         reader.seek(SeekFrom::Start(0x20))?;
-        let mut name = String::new();
-        loop {
-            match reader.read_to_u8()? {
-                0x00 => {
-                    break;
+        let name = {
+            let mut buf = vec![0u8; 32usize];
+            reader.read_exact(&mut buf)?;
+            let mut buf_keep = Vec::new();
+            for c in buf {
+                if c != 0 {
+                    buf_keep.push(c);
                 }
-                x => name.push(char::from(x)),
             }
-        }
+            String::from_utf8(buf_keep)?
+        };
         reader.seek(SeekFrom::Start(0x44))?;
         let dimensions = ImageSize::import(reader)?;
         reader.seek(SeekFrom::Start(0x64))?;
@@ -113,7 +113,7 @@ impl TID {
                         height: self.dimensions.height / 4,
                     };
                     for i in 0..(order_dimensions.width * order_dimensions.height) {
-                        let tile = decode_bc1_block(reader);
+                        let tile = decode_bc1_block(reader)?;
                         let tile_write_position = morton_order(i, order_dimensions);
                         for tile_y in 0..4 {
                             for tile_x in 0..4 {

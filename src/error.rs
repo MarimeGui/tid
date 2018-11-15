@@ -1,7 +1,8 @@
-use magic_number::MagicNumberCheckError;
+use ez_io::error::MagicNumberCheckError;
 use std::error::Error;
 use std::fmt;
 use std::io::Error as IOError;
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub enum TIDError {
@@ -10,6 +11,7 @@ pub enum TIDError {
     UnknownDataType(u8),
     UnknownFourCC(Vec<u8>),
     NoFourCC,
+    NameDecodeError(FromUtf8Error),
 }
 
 impl Error for TIDError {
@@ -20,6 +22,7 @@ impl Error for TIDError {
             TIDError::UnknownDataType(_) => "Unknown data type",
             TIDError::UnknownFourCC(_) => "Unknown FourCC code",
             TIDError::NoFourCC => "Missing FourCC for BC type",
+            TIDError::NameDecodeError(_) => "Failed to read name in header",
         }
     }
 }
@@ -35,6 +38,7 @@ impl fmt::Display for TIDError {
                 f,
                 "No FourCC was defined, cannot infer what type of Block Compression to decode"
             ),
+            TIDError::NameDecodeError(ref e) => e.fmt(f),
         }
     }
 }
@@ -48,5 +52,11 @@ impl From<IOError> for TIDError {
 impl From<MagicNumberCheckError> for TIDError {
     fn from(e: MagicNumberCheckError) -> TIDError {
         TIDError::MagicNumber(e)
+    }
+}
+
+impl From<FromUtf8Error> for TIDError {
+    fn from(e: FromUtf8Error) -> TIDError {
+        TIDError::NameDecodeError(e)
     }
 }

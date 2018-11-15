@@ -5,7 +5,6 @@ authors = ["MarimeGui <lepro.guillaume@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-magic_number = { git = "https://github.com/MarimeGui/magic_number_rust.git" }
 ez_io = { git = "https://github.com/MarimeGui/ez_io.git" }
 clap = "2.31.2"
 rgb = "0.8.11"
